@@ -27,6 +27,7 @@ let tick = 0
 , playerState
 , fallingPresents = []
 , houses = []
+, score = 0
 
 document.addEventListener('keydown', ev => {
     if (ev.key === 'a') {
@@ -71,7 +72,7 @@ const House = (x, y, w, h, dx=-1) => ({
 })
 
 const Present = (x, y, dx=-0.4, dy=0.1) => ({
-    x, y, dx, dy
+    x, y, dx, dy, delivered: false
 })
 
 const update = dt => {
@@ -92,8 +93,16 @@ const update = dt => {
         p.dy += gravity
         p.y += p.dy
         p.x += p.dx
+        for (const h of houses) {
+            if (p.x >= h.x && (p.x + 10) < (h.x + h.w)) {
+                if (p.y + 10 >= h.y) {
+                    p.delivered = true
+                    score += 1
+                }
+            }
+        }
     }
-    fallingPresents = fallingPresents.filter(p => p.y < stageH)
+    fallingPresents = fallingPresents.filter(p => p.y < stageH && !p.delivered)
     for (const h of houses) {
         h.x += h.dx
     }
@@ -115,6 +124,9 @@ const render = dt => {
     for (const h of houses) {
         stage.fillRect(h.x, h.y, h.w, h.h)
     }
+    stage.fillStyle = 'white'
+    stage.font = '40px mono'
+    stage.fillText(`Score: ${score}`, 10, 40)
 }
 
 const loop = dt => {
