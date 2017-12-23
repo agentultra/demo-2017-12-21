@@ -25,9 +25,11 @@ let tick = 0
 , dy = 0.1
 , gravity = 1.08
 , playerState
+, score = 0
+, presentsLeft = 1000
 , fallingPresents = []
 , houses = []
-, score = 0
+, enemies = []
 
 document.addEventListener('keydown', ev => {
     if (ev.key === 'a') {
@@ -75,10 +77,18 @@ const Present = (x, y, dx=-0.4, dy=0.1) => ({
     x, y, dx, dy, delivered: false
 })
 
+const Bird = (x, y, dx=0, dy=0, state='FLYING') => ({
+    x, y, dx, dy, state
+})
+
 const update = dt => {
     if (tick % 80 == 0) {
-        if (Math.random() > 0.3)
+        if (Math.random() > 0.3) {
             houses.push(House(stageW, stageH - 40, 60, 40, -1))
+        }
+        if (Math.random() > 0.4) {
+            enemies.push(Bird(stageW, y, -3))
+        }
     }
     if (btn('Up')) dy = -speed
     if (btn('Right')) dx = speed
@@ -87,6 +97,7 @@ const update = dt => {
     if (btn('Fire')) playerState = playerStates.DROPPING
     if (playerState === playerStates.DROPPING) {
         fallingPresents.push(Present(x, y, dx*0.6, dy+dy*Math.random()))
+        presentsLeft -= 1
         playerState = playerStates.FLYING
     }
     for (const p of fallingPresents) {
@@ -106,6 +117,11 @@ const update = dt => {
     for (const h of houses) {
         h.x += h.dx
     }
+    for (const e of enemies) {
+        //e = e.update(tick, dt)
+        e.x += e.dx
+        e.y += e.dy
+    }
     houses = houses.filter(h => h.x + h.w > 0)
     dy += gravity
     x = clamp(0, stageW - 20, x + dx)
@@ -116,6 +132,10 @@ const render = dt => {
     clear()
     stage.fillStyle = 'green'
     stage.fillRect(x, y, 20, 20)
+    stage.fillStyle = 'yellow'
+    for (const e of enemies) {
+        stage.fillRect(e.x, e.y, 10, 5)
+    }
     stage.fillStyle = 'magenta'
     for (const p of fallingPresents) {
         stage.fillRect(p.x, p.y, 10, 10)
@@ -127,6 +147,7 @@ const render = dt => {
     stage.fillStyle = 'white'
     stage.font = '40px mono'
     stage.fillText(`Score: ${score}`, 10, 40)
+    stage.fillText(`Presents Left: ${presentsLeft}`, 10, 80)
 }
 
 const loop = dt => {
