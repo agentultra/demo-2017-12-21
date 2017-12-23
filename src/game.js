@@ -17,7 +17,8 @@ const canvas = document.getElementById('stage')
 canvas.width = stageW
 canvas.height = stageH
 
-let x = 40
+let tick = 0
+, x = 40
 , y = 40
 , speed = 8
 , dx = 0
@@ -25,6 +26,7 @@ let x = 40
 , gravity = 1.08
 , playerState
 , fallingPresents = []
+, houses = []
 
 document.addEventListener('keydown', ev => {
     if (ev.key === 'a') {
@@ -64,11 +66,19 @@ const clear = () => {
     stage.fillRect(0, 0, stageW, stageH)
 }
 
+const House = (x, y, w, h, dx=-1) => ({
+    x, y, w, h, dx
+})
+
 const Present = (x, y, dx=-0.4, dy=0.1) => ({
     x, y, dx, dy
 })
 
 const update = dt => {
+    if (tick % 80 == 0) {
+        if (Math.random() > 0.3)
+            houses.push(House(stageW, stageH - 40, 60, 40, -1))
+    }
     if (btn('Up')) dy = -speed
     if (btn('Right')) dx = speed
     if (btn('Left')) dx = -speed
@@ -84,6 +94,10 @@ const update = dt => {
         p.x += p.dx
     }
     fallingPresents = fallingPresents.filter(p => p.y < stageH)
+    for (const h of houses) {
+        h.x += h.dx
+    }
+    houses = houses.filter(h => h.x + h.w > 0)
     dy += gravity
     x = clamp(0, stageW - 20, x + dx)
     y = clamp(0, stageH - 20, y + dy)
@@ -97,11 +111,16 @@ const render = dt => {
     for (const p of fallingPresents) {
         stage.fillRect(p.x, p.y, 10, 10)
     }
+    stage.fillStyle = 'blue'
+    for (const h of houses) {
+        stage.fillRect(h.x, h.y, h.w, h.h)
+    }
 }
 
 const loop = dt => {
-    update()
-    render()
+    update(dt)
+    render(dt)
+    tick += 1
     window.requestAnimationFrame(loop);
 }
 
