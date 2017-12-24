@@ -86,7 +86,7 @@ const Present = (x, y, dx=-0.4, dy=0.1) => ({
 })
 
 const Bird = (x, y, dx=0, dy=0, state='FLYING') => ({
-    name: 'BIRD', x, y, dx, dy, state
+    name: 'BIRD', x, y, dx, dy, state, deathTimeout: 15
 })
 
 const updateBird = bird => {
@@ -103,11 +103,24 @@ const updateBird = bird => {
         }
     }
 
+    const updateDying = b => {
+        b.dy += 1
+        b.deathTimeout -= 1
+        if (b.deathTimeout === 0)
+            b.state = 'DEAD'
+    }
+
     switch (bird.state) {
     case 'FLYING':
         updateFlying(bird)
         break;
+    case 'DYING':
+        updateDying(bird)
+        break;
     }
+
+    if (bird.x + 10 < 0)
+        bird.state = 'DEAD'
 }
 
 const updateEnemy = e => {
@@ -170,11 +183,12 @@ const update = dt => {
         e.y += e.dy
 
         if (intersectRect(x, y, 20, 20, e.x, e.y, 10, 5)) {
-            e.state = 'FALLING'
+            e.state = 'DYING'
             if (playerState !== playerStates.HIT && dy <= 0)
                 playerState = playerStates.HIT
         }
     }
+    enemies = enemies.filter(e => e.state !== 'DEAD')
     dy += gravity
     x = clamp(0, stageW - 20, x + dx)
     y = clamp(0, stageH - 20, y + dy)
