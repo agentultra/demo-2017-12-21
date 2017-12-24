@@ -11,7 +11,8 @@ const canvas = document.getElementById('stage')
 }
 , playerStates = {
     FLYING: 'FLYING',
-    DROPPING: 'DROPPING'
+    DROPPING: 'DROPPING',
+    HIT: 'HIT'
 }
 
 canvas.width = stageW
@@ -24,12 +25,13 @@ let tick = 0
 , dx = 0
 , dy = 0.1
 , gravity = 1.08
-, playerState
+, playerState = playerStates.FLYING
 , score = 0
 , presentsLeft = 1000
 , fallingPresents = []
 , houses = []
 , enemies = []
+, hitTimeout = 20
 
 document.addEventListener('keydown', ev => {
     if (ev.key === 'a') {
@@ -63,6 +65,12 @@ const btn = name => name in buttons && buttons[name]
 
 const clamp = (min, max, v) =>
       v <= min ? min : v >= max ? max : v
+
+const intersectRect = (ax, ay, aw, ah, bx, by, bw, bh) =>
+      !((ax + aw < bx) ||
+        (ax > bx + bw) ||
+        (ay + ah < by) ||
+        (ay > by + bh))
 
 const clear = () => {
     stage.fillStyle = 'black'
@@ -119,15 +127,24 @@ const update = dt => {
             enemies.push(Bird(stageW, y, -3))
         }
     }
-    if (btn('Up')) dy = -speed
-    if (btn('Right')) dx = speed
-    if (btn('Left')) dx = -speed
-    if (!btn('Left') && !btn('Right')) dx = 0
-    if (btn('Fire')) playerState = playerStates.DROPPING
-    if (playerState === playerStates.DROPPING) {
-        fallingPresents.push(Present(x, y, dx*0.6, dy+dy*Math.random()))
-        presentsLeft -= 1
-        playerState = playerStates.FLYING
+
+    if (playerState === playerStates.FLYING) {
+        if (btn('Up')) dy = -speed
+        if (btn('Right')) dx = speed
+        if (btn('Left')) dx = -speed
+        if (!btn('Left') && !btn('Right')) dx = 0
+        if (btn('Fire')) playerState = playerStates.DROPPING
+        if (playerState === playerStates.DROPPING) {
+            fallingPresents.push(Present(x, y, dx*0.6, dy+dy*Math.random()))
+            presentsLeft -= 1
+            playerState = playerStates.FLYING
+        }
+    } else if (playerState === playerStates.HIT) {
+        hitTimeout -= 1
+        if (hitTimeout === 0) {
+            hitTimeout = 20
+            playerState = playerStates.FLYING
+        }
     }
     for (const p of fallingPresents) {
         p.dy += gravity
@@ -146,12 +163,18 @@ const update = dt => {
     for (const h of houses) {
         h.x += h.dx
     }
+    houses = houses.filter(h => h.x + h.w > 0)
     for (const e of enemies) {
         updateEnemy(e)
         e.x += e.dx
         e.y += e.dy
+
+        if (intersectRect(x, y, 20, 20, e.x, e.y, 10, 5)) {
+            e.state = 'FALLING'
+            if (playerState !== playerStates.HIT && dy <= 0)
+                playerState = playerStates.HIT
+        }
     }
-    houses = houses.filter(h => h.x + h.w > 0)
     dy += gravity
     x = clamp(0, stageW - 20, x + dx)
     y = clamp(0, stageH - 20, y + dy)
@@ -159,7 +182,7 @@ const update = dt => {
 
 const render = dt => {
     clear()
-    stage.fillStyle = 'green'
+    stage.fillStyle = playerState === playerStates.FLYING ? 'green' : 'red'
     stage.fillRect(x, y, 20, 20)
     stage.fillStyle = 'yellow'
     for (const e of enemies) {
