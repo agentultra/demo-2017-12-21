@@ -78,8 +78,37 @@ const Present = (x, y, dx=-0.4, dy=0.1) => ({
 })
 
 const Bird = (x, y, dx=0, dy=0, state='FLYING') => ({
-    x, y, dx, dy, state
+    name: 'BIRD', x, y, dx, dy, state
 })
+
+const updateBird = bird => {
+    const updateFlying = b => {
+        if (tick % 90 === 0) {
+            const c = Math.random()
+            if (c < 0.3) {
+                if (b.y < 300) b.dy = 1
+            } else if (c >= 0.3 && c < 0.7) {
+                b.dy = 0
+            } else {
+                b.dy = -1
+            }
+        }
+    }
+
+    switch (bird.state) {
+    case 'FLYING':
+        updateFlying(bird)
+        break;
+    }
+}
+
+const updateEnemy = e => {
+    switch (e.name) {
+    case 'BIRD':
+        updateBird(e)
+        break;
+    }
+}
 
 const update = dt => {
     if (tick % 80 == 0) {
@@ -118,7 +147,7 @@ const update = dt => {
         h.x += h.dx
     }
     for (const e of enemies) {
-        //e = e.update(tick, dt)
+        updateEnemy(e)
         e.x += e.dx
         e.y += e.dy
     }
