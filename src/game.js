@@ -19,7 +19,7 @@ canvas.width = stageW
 canvas.height = stageH
 
 let tick = 0
-, x = 40
+, x = 108
 , y = 40
 , speed = 8
 , dx = 0
@@ -32,6 +32,44 @@ let tick = 0
 , houses = []
 , enemies = []
 , hitTimeout = 20
+, prevPositions = [
+    [107, 40],
+    [106, 40],
+    [105, 40],
+    [104, 40],
+    [103, 40],
+    [102, 40],
+    [101, 40],
+    [100, 40],
+    [99, 40],
+    [98, 40],
+    [97, 40],
+    [96, 40],
+    [95, 40],
+    [94, 40],
+    [93, 40],
+    [92, 40],
+    [91, 40],
+    [90, 40],
+    [89, 40],
+    [88, 40],
+    [87, 40],
+    [86, 40],
+    [85, 40],
+    [84, 40],
+    [83, 40],
+    [82, 40],
+    [81, 40],
+    [80, 40],
+    [79, 40],
+    [78, 40],
+    [76, 40],
+    [77, 40],
+    [76, 40],
+    [74, 40],
+    [73, 40],
+    [72, 40]
+]
 
 document.addEventListener('keydown', ev => {
     if (ev.key === 'a') {
@@ -184,7 +222,7 @@ const update = dt => {
 
         if (intersectRect(x, y, 20, 20, e.x, e.y, 10, 5)) {
             e.state = 'DYING'
-            if (playerState !== playerStates.HIT && dy <= 0)
+            if (playerState !== playerStates.HIT)
                 playerState = playerStates.HIT
         }
     }
@@ -192,12 +230,17 @@ const update = dt => {
     dy += gravity
     x = clamp(0, stageW - 20, x + dx)
     y = clamp(0, stageH - 20, y + dy)
+    prevPositions.push([x, y])
+    if (prevPositions.length >= 30)
+        prevPositions = prevPositions.slice(1)
 }
 
 const render = dt => {
     clear()
     stage.fillStyle = playerState === playerStates.FLYING ? 'green' : 'red'
     stage.fillRect(x, y, 20, 20)
+    stage.fillStyle = 'brown'
+    stage.fillRect(prevPositions[28][0] - 20, prevPositions[28][1], 20, 20)
     stage.fillStyle = 'yellow'
     for (const e of enemies) {
         stage.fillRect(e.x, e.y, 10, 5)
